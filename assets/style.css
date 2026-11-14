@@ -437,3 +437,9 @@ html.locked body > :not(.gate):not(script){visibility:hidden}
 .leaflet-popup:has(.pop>img) a.leaflet-popup-close-button{color:#fff;text-shadow:0 0 4px rgba(0,0,0,.6)}
 /* logo tiles: same soft background as the card photo area */
 .ph-logo{background:#fff;box-shadow:inset 0 0 0 1px rgba(0,0,0,.04)}
+
+/* popup close (X): small round button on the left, away from the Hebrew title */
+.leaflet-container a.leaflet-popup-close-button{right:auto;left:8px;top:8px;width:26px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:rgba(255,255,255,.95);color:#5f6368;font:400 18px/1 system-ui,sans-serif;text-shadow:none;box-shadow:0 1px 3px rgba(0,0,0,.2);z-index:2}
+.leaflet-container a.leaflet-popup-close-button:hover{background:#fff;color:#202124}
+.leaflet-popup:has(.pop>img) a.leaflet-popup-close-button{color:#5f6368;text-shadow:none}
+.pop .in h3{padding-left:30px}
