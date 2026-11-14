@@ -181,9 +181,6 @@ select.sel{appearance:none;border:1px solid var(--line);background:var(--surface
 .sheet input,.sheet select,.sheet textarea{border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:15px;background:#fff;outline:none;color:var(--ink)}
 .sheet input:focus,.sheet select:focus,.sheet textarea:focus{border-color:var(--ink)}
 .sheet .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.sheet .addr-row{display:flex;gap:8px}
-.sheet .addr-row input{flex:1}
-#pickmap{height:220px;border-radius:12px;overflow:hidden}
 .hint{font-size:12.5px;color:var(--ink-3);margin:-4px 0 0}
 .hint.err{color:var(--brand-dark)}
 .sheet-f{display:flex;gap:8px;justify-content:flex-start;padding:0 20px 20px}

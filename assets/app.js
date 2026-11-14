@@ -368,84 +368,6 @@ function pinIcon(p,sel){
 }
 const meIcon=()=>L.divIcon({className:"",html:`<div class="me-dot"></div>`,iconSize:[18,18],iconAnchor:[9,9]});
 
-/* ---------- add-a-place sheet ---------- */
-function addSheet(kind,onSaved){
-  let m=$("#addsheet");
-  if(!m){
-    m=document.createElement("div"); m.id="addsheet"; m.className="modal"; m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true");
-    document.body.append(m);
-  }
-  const cats=CATS[kind];
-  m.innerHTML=`<form class="sheet" novalidate>
-    <div class="sheet-h"><h2>${kind==="shop"?"הוספת חנות":"הוספת מקום אוכל"}</h2><button type="button" class="btn ghost sm" data-close aria-label="סגירה">${icon("x")}</button></div>
-    <div class="sheet-b">
-      <label>שם<input name="name" required maxlength="80" autocomplete="off"></label>
-      <div class="two">
-        <label>קטגוריה<select name="cat">${Object.entries(cats).map(([k,v])=>`<option value="${k}">${v.label}</option>`).join("")}</select></label>
-        <label>עיר<select name="area">${[...new Set(places().map(p=>p.area))].sort((a,b)=>a.localeCompare(b,"he")).map(a=>`<option ${a==="גבעת שמואל"?"selected":""}>${esc(a)}</option>`).join("")}</select></label>
-      </div>
-      <label>כתובת<div class="addr-row"><input name="addr" placeholder="למשל: ויצמן 12, גבעת שמואל…" autocomplete="off" spellcheck="false"><button type="button" class="btn" data-geo>${icon("search")}איתור</button></div></label>
-      <p class="hint" id="geohint" aria-live="polite">אפשר גם ללחוץ על המפה כדי לסמן את המיקום.</p>
-      <div id="pickmap"></div>
-      <div class="two">
-        <label>ההטבה (לא חובה)<input name="deal" placeholder="למשל: 10% הנחה…" maxlength="80" autocomplete="off"></label>
-        <label>אתר (לא חובה)<input name="site" type="url" inputmode="url" placeholder="https://…" maxlength="200" autocomplete="off" spellcheck="false"></label>
-      </div>
-    </div>
-    <div class="sheet-f"><button class="btn primary" type="submit">${icon("plus")}שמירה</button><button class="btn ghost" type="button" data-close>ביטול</button></div>
-  </form>`;
-  const opener=document.activeElement;
-  m.classList.add("open");
-  const f=$("form",m), hint=$("#geohint",m);
-  let ll=null, mk=null;
-  const pm=L.map($("#pickmap",m),{zoomControl:false,attributionControl:false}).setView(ME||HOME,14);
-  baseLayer(pm);
-  const setLL=x=>{ ll=x; if(mk) mk.setLatLng(x); else mk=L.marker(x,{draggable:true,icon:pinIcon({kind,cat:f.cat.value,id:""})}).addTo(pm).on("dragend",e=>{const p=e.target.getLatLng();ll=[p.lat,p.lng];}); };
-  pm.on("click",e=>setLL([e.latlng.lat,e.latlng.lng]));
-  f.cat.onchange=()=>mk&&mk.setIcon(pinIcon({kind,cat:f.cat.value,id:""}));
-  setTimeout(()=>{pm.invalidateSize();f.name.focus();},60);
-  const close=()=>{ m.classList.remove("open"); pm.remove(); opener&&opener.focus&&opener.focus(); };
-  $$("[data-close]",m).forEach(b=>b.onclick=close);
-  m.onclick=e=>{ if(e.target===m) close(); };
-  document.addEventListener("keydown",function k(e){ if(e.key==="Escape"&&m.classList.contains("open")){close();document.removeEventListener("keydown",k);} });
-  async function geocode(){
-    const q=f.addr.value.trim(); if(!q){ hint.textContent="כתבו כתובת קודם."; hint.className="hint err"; return; }
-    hint.textContent="מחפש…"; hint.className="hint";
-    try{
-      const r=await fetch("https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=il&accept-language=he&q="+encodeURIComponent(q));
-      const j=await r.json();
-      if(!j.length) throw 0;
-      setLL([+j[0].lat,+j[0].lon]); pm.setView(ll,17);
-      hint.textContent="נמצא. אם הסיכה לא במקום, גררו אותה."; hint.className="hint";
-    }catch(e){ hint.textContent="לא מצאתי את הכתובת. סמנו את המקום על המפה."; hint.className="hint err"; }
-  }
-  $("[data-geo]",m).onclick=geocode;
-  f.addr.onkeydown=e=>{ if(e.key==="Enter"){ e.preventDefault(); geocode(); } };
-  f.onsubmit=e=>{
-    e.preventDefault();
-    const name=f.name.value.trim();
-    if(!name){ f.name.focus(); return; }
-    if(!ll){ hint.textContent="צריך מיקום: איתור לפי כתובת או לחיצה על המפה."; hint.className="hint err"; f.addr.focus(); return; }
-    let site=f.site.value.trim(); if(site&&!/^https?:\/\//.test(site)) site="https://"+site;
-    const p={id:"u"+Date.now().toString(36),kind,mine:true,name,cat:f.cat.value,area:f.area.value,addr:f.addr.value.trim(),
-      lat:+ll[0].toFixed(6),lng:+ll[1].toFixed(6),rating:null,reviews:null,type:"",deal:f.deal.value.trim(),site:site||null,kosher:false};
-    custom.push(p); saveCustom(); close(); toast("נוסף לרשימה"); onSaved&&onSaved(p);
-  };
-}
-function removeCustom(id){ custom=custom.filter(p=>p.id!==id); saveCustom(); favs.delete(id); saveFavs(); }
-function exportCustom(){
-  const blob=new Blob([JSON.stringify(custom,null,1)],{type:"application/json"});
-  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="lohaver-places.json"; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
-}
-function importCustom(file,done){
-  const r=new FileReader();
-  r.onload=()=>{ try{ const arr=JSON.parse(r.result); if(!Array.isArray(arr)) throw 0;
-    const ids=new Set(custom.map(p=>p.id)); let n=0;
-    arr.forEach(p=>{ if(p&&p.id&&p.name&&isFinite(p.lat)&&isFinite(p.lng)&&CATS[p.kind]&&!ids.has(p.id)){ custom.push({...p,mine:true}); n++; } });
-    saveCustom(); toast(n?`נוספו ${n} מקומות`:"לא נמצאו מקומות חדשים בקובץ"); done&&done(); }catch(e){ toast("הקובץ לא תקין"); } };
-  r.readAsText(file);
-}
-
 /* ---------- explorer page (food / shops) ---------- */
 function explorer(kind){
   const qs=new URLSearchParams(location.search);
@@ -632,9 +554,6 @@ function explorer(kind){
   el.fav&&(el.fav.onclick=()=>{ st.fav=!st.fav; render(true); });
   el.open&&(el.open.onclick=()=>{ st.open=!st.open; render(true); });
   setInterval(()=>{ if(!document.hidden) render(); },60000);
-  const ex=$("#export"), im=$("#import");
-  ex&&(ex.onclick=()=>{ if(!custom.length) return toast("עוד לא הוספת מקומות"); exportCustom(); });
-  im&&(im.onchange=()=>{ if(im.files[0]) importCustom(im.files[0],()=>render(true)); im.value=""; });
 
   // mobile list/map toggle
   const mobile=()=>matchMedia("(max-width:900px)").matches;
