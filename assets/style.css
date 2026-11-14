@@ -444,3 +444,7 @@ html.locked body > :not(.gate):not(script){visibility:hidden}
 .leaflet-popup:has(.pop>img) a.leaflet-popup-close-button{color:#5f6368;text-shadow:none}
 .pop .in h3{padding-left:30px}
 .acctmenu .btn{margin-top:8px}
+
+/* brand photo sits above the logo/tile; if it fails it is removed and those show */
+.ph img.brand-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;background:#fff}
+.ph .ph-logo{z-index:0}

@@ -244,13 +244,17 @@ function photo(p){
   const c=catOf(p);
   if(p.img) return `<img src="${esc(p.img)}" alt="" loading="lazy" decoding="async" width="240" height="240">`;
   const tile=`<div class="ph-tile" style="--c:${c.color}">${icon(c.icon,"ph-tile-ic")}<span class="ph-tile-tx">${esc(initials(p.name))}</span></div>`;
-  if(!p.dom) return tile;
-  return `${tile}<div class="ph-logo"><img class="logo-img" src="https://www.google.com/s2/favicons?domain=${encodeURIComponent(p.dom)}&sz=128" alt="" loading="lazy" decoding="async" width="64" height="64" referrerpolicy="no-referrer"></div>`;
+  const brandPhoto=p.photo?`<img class="brand-photo" src="${esc(p.photo)}" alt="" loading="lazy" decoding="async" width="240" height="240" referrerpolicy="no-referrer">`:"";
+  if(!p.dom) return tile+brandPhoto;
+  return `${tile}${brandPhoto}<div class="ph-logo"><img class="logo-img" src="https://www.google.com/s2/favicons?domain=${encodeURIComponent(p.dom)}&sz=128" alt="" loading="lazy" decoding="async" width="64" height="64" referrerpolicy="no-referrer"></div>`;
 }
 /* brand logos: hide the generic 16px "no icon" result so the designed tile shows instead */
 document.addEventListener("load",e=>{ const im=e.target; if(im.classList&&im.classList.contains("logo-img")){ const w=im.naturalWidth;
   if(w<=16) im.parentNode.remove(); else im.parentNode.classList.add(w>=96?"big":"ok"); } },true);
-document.addEventListener("error",e=>{ const im=e.target; if(im.classList&&im.classList.contains("logo-img")) im.parentNode.remove(); },true);
+document.addEventListener("error",e=>{ const im=e.target; if(!im.classList) return;
+  if(im.classList.contains("logo-img")) im.parentNode.remove();
+  else if(im.classList.contains("brand-photo")) im.remove(); },true);
+document.addEventListener("load",e=>{ const im=e.target; if(im.classList&&im.classList.contains("brand-photo")&&im.naturalWidth<40) im.remove(); },true);
 function rating(p){
   return p.rating==null?"":`<span class="rate">${icon("star")}<b>${p.rating.toFixed(1)}</b>${p.reviews?`<span>(${nf0.format(p.reviews)})</span>`:""}</span>`;
 }
@@ -536,7 +540,8 @@ function explorer(kind){
     return p._spot=[p.lat+r*Math.sin(ang),p.lng+r*Math.cos(ang)/Math.cos(p.lat*Math.PI/180)];
   }
   function popup(p){
-    return `<div class="pop">${p.img?`<img src="${esc(p.img)}" alt="" width="250" height="120">`:""}<div class="in"><h3>${esc(p.name)}</h3>
+    const pic=p.img||p.photo;
+    return `<div class="pop">${pic?`<img src="${esc(pic)}" alt="" width="250" height="120" referrerpolicy="no-referrer" onerror="this.remove()">`:""}<div class="in"><h3>${esc(p.name)}</h3>
       <div class="meta">${rating(p)}${tags(p)}<span>${esc(p.type||catOf(p).label)}</span></div>
       <div class="meta">${statusHTML(p)}</div>
       <div class="addr" style="white-space:normal">${p.addr?esc(p.addr)+" · ":""}${fmtKm(distOf(p))}</div>
