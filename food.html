@@ -15,14 +15,13 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
-<link rel="stylesheet" href="assets/style.css?v=e6c0d741a0">
+<link rel="stylesheet" href="assets/style.css?v=2d88d3aefe">
 </head>
 <body>
 <main class="ex" id="main">
   <section class="ex-side">
     <div class="ex-head">
       <h1>אוכל<span class="count" id="count"></span></h1>
-      <button class="btn sm" data-addbtn><svg class="i" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>הוספת מקום</button>
     </div>
     <div class="filters">
       <div class="field">
@@ -46,9 +45,6 @@
     </div>
     <p class="opennote" id="opennote" hidden></p>
     <div class="list" id="list"></div>
-    <div class="backup"><span>גיבוי המקומות שהוספת:</span>
-      <button class="btn sm ghost" id="export">ייצוא לקובץ</button>
-      <label class="btn sm ghost">ייבוא מקובץ<input type="file" id="import" accept="application/json,.json" hidden></label></div>
   </section>
   <div id="map"></div>
 </main>
@@ -60,10 +56,10 @@
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.0.22/leaflet-maplibre-gl.js"></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
-<script src="assets/gate.js?v=e6c0d741a0"></script>
-<script src="assets/firebase-config.js?v=e6c0d741a0"></script>
-<script src="assets/cloud.js?v=e6c0d741a0"></script>
-<script src="assets/app.js?v=e6c0d741a0"></script>
+<script src="assets/gate.js?v=2d88d3aefe"></script>
+<script src="assets/firebase-config.js?v=2d88d3aefe"></script>
+<script src="assets/cloud.js?v=2d88d3aefe"></script>
+<script src="assets/app.js?v=2d88d3aefe"></script>
 <script>Gate.ready.then(()=>{ Lachaver.chrome("food"); Lachaver.explorer("food"); });</script>
 </body>
 </html>

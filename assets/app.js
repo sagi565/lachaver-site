@@ -99,7 +99,7 @@ async function syncFavs(){
 }
 let custom=ls.get("lachaver.custom",[]);
 const saveCustom=()=>ls.set("lachaver.custom",custom);
-function places(kind){ return [...(window.PLACES||[]),...custom].filter(p=>!kind||p.kind===kind); }
+function places(kind){ return (window.PLACES||[]).filter(p=>!kind||p.kind===kind); }
 const catOf=p=>(CATS[p.kind]||{})[p.cat]||CATS.shop.other;
 
 /* ---------- location ---------- */
@@ -575,9 +575,7 @@ function explorer(kind){
   }
   function emptyHTML(){
     if(st.fav&&!favs.size) return `<div class="empty"><h3>אין עדיין מועדפים</h3><p>לחצו על הלב בכרטיס של מקום כדי לשמור אותו כאן.</p></div>`;
-    if(!items().length) return `<div class="empty"><h3>${kind==="shop"?"עוד אין כאן חנויות":"עוד אין כאן מקומות"}</h3>
-      <p>${kind==="shop"?"מצאתם חנות שמכבדת חבר? הוסיפו אותה, והיא תופיע ברשימה ובמפה.":"הוסיפו מקום, והוא יופיע ברשימה ובמפה."}</p>
-      <button class="btn primary" data-add>${icon("plus")}${kind==="shop"?"הוספת חנות":"הוספת מקום"}</button></div>`;
+    if(!items().length) return `<div class="empty"><h3>עוד אין כאן מקומות</h3></div>`;
     if(st.open) return `<div class="empty"><h3>אין כרגע מקום פתוח שמתאים לסינון</h3><p>אפשר לבטל את "פתוח עכשיו" כדי לראות את כולם, כולל מקומות שאין לנו את השעות שלהם.</p><button class="btn" data-reset>ניקוי סינון</button></div>`;
     return `<div class="empty"><h3>לא נמצאו תוצאות</h3><p>נסו לשנות את הסינון.</p><button class="btn" data-reset>ניקוי סינון</button></div>`;
   }
@@ -619,7 +617,6 @@ function explorer(kind){
     if(e.target.closest("a,.heart")) return;
     const d=e.target.closest("[data-del]"); if(d){ e.stopPropagation(); if(confirm("למחוק את המקום שהוספת?")){ removeCustom(d.dataset.del); render(); toast("נמחק"); } return; }
     if(e.target.closest("[data-more]")){ shown+=PAGE; render.keepPage=true; render(); render.keepPage=false; return; }
-    if(e.target.closest("[data-add]")) return addSheet(kind,p=>{ st.sel=p.id; render(); select(p.id,true); });
     if(e.target.closest("[data-reset]")){ Object.assign(st,{q:"",area:null,cat:null,kosher:false,fav:false,open:false}); el.q.value=""; return render(true); }
     const c=e.target.closest(".card"); if(c) select(c.dataset.id,true);
   });
@@ -630,7 +627,6 @@ function explorer(kind){
   el.fav&&(el.fav.onclick=()=>{ st.fav=!st.fav; render(true); });
   el.open&&(el.open.onclick=()=>{ st.open=!st.open; render(true); });
   setInterval(()=>{ if(!document.hidden) render(); },60000);
-  $$("[data-addbtn]").forEach(b=>b.onclick=()=>addSheet(kind,p=>{ st.sel=p.id; render(); select(p.id,true); }));
   const ex=$("#export"), im=$("#import");
   ex&&(ex.onclick=()=>{ if(!custom.length) return toast("עוד לא הוספת מקומות"); exportCustom(); });
   im&&(im.onchange=()=>{ if(im.files[0]) importCustom(im.files[0],()=>render(true)); im.value=""; });
