@@ -278,7 +278,7 @@ html{-webkit-tap-highlight-color:rgba(224,73,43,.15)}
 a,button,select,label,.chip,.btn{touch-action:manipulation}
 :focus-visible{outline:2.5px solid #1a73e8;outline-offset:2px;border-radius:6px}
 .field input:focus-visible,.sheet input:focus-visible,.sheet select:focus-visible{outline:2.5px solid #1a73e8;outline-offset:1px}
-.card:focus-within{outline-color:#1a73e8}
+
 .skip{position:fixed;top:8px;right:8px;z-index:5000;background:var(--ink);color:#fff;padding:10px 14px;border-radius:10px;text-decoration:none;transform:translateY(-150%);transition:transform .15s}
 .skip:focus{transform:none}
 h1,h2,h3{text-wrap:balance}
@@ -422,3 +422,18 @@ html.locked body > :not(.gate):not(script){visibility:hidden}
 .hr-tx b{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hr-tx small{color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hr-empty{margin:0;padding:14px;color:var(--ink-2)}
+
+/* --- UI fixes --- */
+/* selected / keyboard-focused card: draw the frame above the photo, not under it */
+.card{outline:none!important}
+.card::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:3;box-shadow:inset 0 0 0 2px transparent;transition:box-shadow .15s}
+.card.sel::after{box-shadow:inset 0 0 0 2px var(--ink)}
+.card:has(.cardbtn:focus-visible)::after{box-shadow:inset 0 0 0 2.5px #1a73e8}
+
+/* horizontal chip rows: fade the cut edge so it reads as scrollable */
+.filters .scroller{mask-image:linear-gradient(to left,#000 calc(100% - 28px),transparent);-webkit-mask-image:linear-gradient(to left,#000 calc(100% - 28px),transparent);padding-left:24px}
+/* popup close button: dark when there is no photo behind it */
+.leaflet-container a.leaflet-popup-close-button{color:#5f6368;text-shadow:none;font-size:20px}
+.leaflet-popup:has(.pop>img) a.leaflet-popup-close-button{color:#fff;text-shadow:0 0 4px rgba(0,0,0,.6)}
+/* logo tiles: same soft background as the card photo area */
+.ph-logo{background:#fff;box-shadow:inset 0 0 0 1px rgba(0,0,0,.04)}
