@@ -260,7 +260,8 @@ select.sel{appearance:none;border:1px solid var(--line);background:var(--surface
 .gpin.sel .gpin-ic{width:14px;height:14px;fill:#7a1c14;stroke:#7a1c14;stroke-width:1.5}
 .gpin-label{display:none;position:absolute;top:30%;left:calc(100% + 3px);transform:translateY(-50%);white-space:nowrap;font:600 12.5px/1.2 Rubik,system-ui,sans-serif;
   text-shadow:0 0 2px #fff,0 0 2px #fff,0 0 3px #fff,0 0 3px #fff;pointer-events:none;max-width:160px;overflow:hidden;text-overflow:ellipsis}
-.show-labels .gpin-label,.gpin.sel .gpin-label{display:block}
+.gpin-label{display:block}
+.gpin.nolabel .gpin-label{display:none}
 .gpin.sel .gpin-label{color:#202124!important;font-size:13.5px}
 .cluster{background:#fff;color:#202124;border:none;box-shadow:0 1px 4px rgba(0,0,0,.3),inset 0 0 0 3px var(--brand)}
 .leaflet-touch .leaflet-bar a,.leaflet-bar a{width:40px;height:40px;line-height:38px;font-size:22px;color:#5f6368;border-bottom-color:#e8eaed}
@@ -333,25 +334,6 @@ a.chip{text-decoration:none}
 
 .cluster{background:rgba(255,255,255,.92);color:#3c4043;font-size:12px;font-weight:600;border:1.5px solid #c9ccd1;box-shadow:0 1px 3px rgba(0,0,0,.18)}
 
-/* user switcher */
-.who{position:relative}
-.whobtn{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 12px 4px 4px;cursor:pointer;font-weight:500;color:var(--ink)}
-.whobtn:hover{border-color:#cdc5b8}
-.av{width:28px;height:28px;border-radius:50%;background:var(--brand);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex:none}
-.whomenu{position:absolute;top:calc(100% + 8px);left:0;width:260px;background:var(--surface);border-radius:14px;box-shadow:0 10px 40px rgba(0,0,0,.18);padding:12px;z-index:1000}
-.whomenu p{margin:2px 4px 8px;font-weight:600}
-.whomenu small{display:block;margin:8px 4px 0;color:var(--ink-3);font-size:12px}
-.whorow{display:flex;align-items:center;gap:4px}
-.whopick{flex:1;display:flex;align-items:center;gap:10px;border:none;background:none;padding:6px;border-radius:10px;cursor:pointer;text-align:start;font-weight:500;color:var(--ink)}
-.whopick:hover{background:var(--sunk)}
-.whopick.on{background:var(--brand-soft)}
-.whodel{border:none;background:none;color:var(--ink-3);cursor:pointer;padding:6px;border-radius:8px;line-height:0}
-.whodel:hover{background:var(--sunk);color:var(--brand-dark)}
-.whoadd{display:flex;gap:6px;margin-top:8px;padding-top:8px;border-top:1px solid var(--line)}
-.whoadd input{flex:1;min-width:0;border:1px solid var(--line);border-radius:9px;padding:6px 10px;font-size:14px;background:#fff;color:var(--ink)}
-.btn.more{align-self:center;margin:6px 0 10px}
-@media (max-width:900px){ .whobtn .t{display:none} .whobtn{padding:3px} .whomenu{position:fixed;top:calc(var(--head) + 6px);left:12px;right:12px;width:auto} }
-
 /* desktop: fit the whole screen width, no cut-off cards */
 @media (min-width:901px){
   .wrap{max-width:none;padding:0 clamp(24px,3.5vw,64px)}
@@ -383,3 +365,35 @@ html.locked body > :not(.gate):not(script){visibility:hidden}
 .gate-card .btn{justify-content:center;padding:12px}
 .gate-err{min-height:1.2em;color:var(--closed)!important;font-size:14px}
 .gate-fail{position:fixed;inset:auto 0 40% 0;text-align:center;visibility:visible}
+
+/* map names: always visible, dark and readable */
+.gpin-label{color:#202124!important;font:600 12.5px/1.25 Rubik,system-ui,sans-serif;text-shadow:0 0 2px #fff,0 0 2px #fff,0 0 3px #fff,0 0 4px #fff,0 0 5px #fff;max-width:170px}
+.gpin.lbl-left .gpin-label{left:auto;right:calc(100% + 3px)}
+.gpin.sel .gpin-label{font-size:14px}
+.gpin.fav .gpin-label{color:#a0123f!important}
+
+/* pictures: brand logo or designed tile */
+.ph-tile{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,color-mix(in srgb,var(--c) 22%,#fff),color-mix(in srgb,var(--c) 8%,#fff));color:var(--c);overflow:hidden}
+.ph-tile-ic{position:absolute;width:70%!important;height:70%!important;left:-14%;bottom:-16%;opacity:.16;stroke-width:1.4!important}
+.ph-tile-tx{position:relative;font-family:var(--display);font-size:34px;line-height:1;color:color-mix(in srgb,var(--c) 85%,#000)}
+.ph-logo{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#fff;opacity:0;transition:opacity .2s}
+.ph-logo.ok,.ph-logo.big{opacity:1}
+.ph-logo img{position:static!important;width:40px!important;height:40px!important;object-fit:contain!important;inset:auto!important}
+.ph-logo.big img{width:56%!important;height:56%!important}
+.tile .ph-tile-tx{font-size:44px}
+
+/* Google sign-in */
+.gbtn{display:inline-flex;align-items:center;justify-content:center;gap:10px;border:1px solid #dadce0;background:#fff;color:#3c4043;border-radius:999px;padding:10px 16px;font:500 15px/1 Rubik,system-ui,sans-serif;cursor:pointer;transition:background-color .15s,box-shadow .15s}
+.gbtn:hover{background:#f8f9fa;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.gbtn:disabled{cursor:default;opacity:.85}
+.gbtn.sm{padding:7px 12px;font-size:14px}
+.acct{position:relative}
+.acctbtn{border:none;background:none;padding:2px;border-radius:50%;cursor:pointer;line-height:0}
+.acctbtn img{width:32px;height:32px;border-radius:50%}
+.av{width:32px;height:32px;border-radius:50%;background:var(--brand);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:600}
+.acctmenu{position:absolute;top:calc(100% + 8px);left:0;width:250px;background:var(--surface);border-radius:14px;box-shadow:0 10px 40px rgba(0,0,0,.18);padding:14px;z-index:1000;display:flex;flex-direction:column;gap:4px;align-items:flex-start}
+.acctmenu small{color:var(--ink-3)}
+.acctmenu p{margin:6px 0 8px;font-size:13px;color:var(--ink-2)}
+.gate-or{display:flex;align-items:center;gap:10px;color:var(--ink-3);font-size:13px}
+.gate-or::before,.gate-or::after{content:"";flex:1;height:1px;background:var(--line)}
+@media (max-width:900px){ .gbtn.sm span{display:none} .gbtn.sm{padding:7px} .acctmenu{position:fixed;top:calc(var(--head) + 6px);left:12px;right:12px;width:auto} }

@@ -84,16 +84,19 @@ const HOME=[32.0775,34.851];
 /* ---------- storage ---------- */
 const ls={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v);}catch(e){return d;}},
           set(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}};
-/* users: each person on this browser keeps their own favorites */
-let users=ls.get("lachaver.users",null);
-if(!Array.isArray(users)||!users.length){ users=["אני"]; ls.set("lachaver.users",users);
-  const legacy=ls.get("lachaver.favs",ls.get("hvr-favs",null)); if(legacy) ls.set("lachaver.favs:אני",legacy); }
-let user=ls.get("lachaver.user",users[0]); if(!users.includes(user)) user=users[0];
-const favKey=u=>"lachaver.favs:"+u;
-const favs=new Set(ls.get(favKey(user),[]));
-const saveFavs=()=>{ls.set(favKey(user),[...favs]);$$(".favcount").forEach(e=>e.textContent=favs.size||"");};
-function switchUser(u){ if(!users.includes(u)){ users.push(u); ls.set("lachaver.users",users); } ls.set("lachaver.user",u); location.reload(); }
-function removeUser(u){ users=users.filter(x=>x!==u); try{localStorage.removeItem(favKey(u));}catch(e){} if(!users.length) users=["אני"]; ls.set("lachaver.users",users); if(u===user){ ls.set("lachaver.user",users[0]); } location.reload(); }
+/* favorites: kept in this browser; when signed in with Google they sync to the account */
+(function migrate(){ if(ls.get("lachaver.favs",null)) return;
+  const all=new Set(ls.get("hvr-favs",[])); try{ for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k&&k.startsWith("lachaver.favs:")) ls.get(k,[]).forEach(x=>all.add(x)); } }catch(e){}
+  if(all.size) ls.set("lachaver.favs",[...all]); })();
+const favs=new Set(ls.get("lachaver.favs",[]));
+let cloudOn=false, cloudT;
+const saveFavs=()=>{ ls.set("lachaver.favs",[...favs]); $$(".favcount").forEach(e=>e.textContent=favs.size||"");
+  if(cloudOn&&window.Cloud&&Cloud.user){ clearTimeout(cloudT); cloudT=setTimeout(()=>Cloud.write({favs:[...favs]}).catch(e=>console.warn(e)),400); } };
+async function syncFavs(){
+  if(!window.Cloud||!Cloud.user) { cloudOn=false; return; }
+  try{ const d=await Cloud.read(); const before=favs.size; (d&&d.favs||[]).forEach(x=>favs.add(x)); cloudOn=true; saveFavs();
+    if(favs.size!==before) document.dispatchEvent(new CustomEvent("favs")); }catch(e){ console.warn(e); }
+}
 let custom=ls.get("lachaver.custom",[]);
 const saveCustom=()=>ls.set("lachaver.custom",custom);
 function places(kind){ return [...(window.PLACES||[]),...custom].filter(p=>!kind||p.kind===kind); }
@@ -201,40 +204,53 @@ function chrome(active){
     <a class="logo" href="index.html" aria-label="לאחבר, דף הבית"><img src="assets/logo.svg" alt="" width="30" height="30"><b translate="no">לא<span>חבר</span></b></a>
     <nav class="nav">${nav.map(([h,t,,k])=>`<a href="${h}" class="${k===active?"on":""}">${t}</a>`).join("")}</nav>
     <div class="spacer"></div>
-    <a class="favlink" href="food.html?fav=1" title="המועדפים של ${esc(user)}">${icon("heart")}<span class="t">מועדפים</span><em class="favcount">${favs.size||""}</em></a>
-    <div class="who">
-      <button type="button" class="whobtn" aria-haspopup="true" aria-expanded="false" aria-label="משתמש: ${esc(user)}. החלפת משתמש"><span class="av">${esc([...user][0]||"?")}</span><span class="t">${esc(user)}</span></button>
-      <div class="whomenu" hidden>
-        <p>מי משתמש עכשיו?</p>
-        ${users.map(u=>`<div class="whorow"><button type="button" class="whopick ${u===user?"on":""}" data-user="${esc(u)}"><span class="av">${esc([...u][0]||"?")}</span>${esc(u)}</button>${users.length>1?`<button type="button" class="whodel" data-deluser="${esc(u)}" aria-label="הסרת ${esc(u)}">${icon("x")}</button>`:""}</div>`).join("")}
-        <form class="whoadd"><label class="sr" for="newuser">שם משתמש חדש</label><input id="newuser" name="newuser" maxlength="20" placeholder="שם חדש…" autocomplete="off"><button class="btn sm" type="submit">${icon("plus")}הוספה</button></form>
-        <small>המועדפים של כל משתמש נשמרים בנפרד, בדפדפן הזה.</small>
-      </div>
-    </div>
+    <a class="favlink" href="food.html?fav=1" title="המועדפים שלי">${icon("heart")}<span class="t">מועדפים</span><em class="favcount">${favs.size||""}</em></a>
+    <div class="acct" hidden></div>
   </div>`;
   skip.after(top);
-  const wb=$(".whobtn",top), wm=$(".whomenu",top);
-  const setOpen=o=>{ wm.hidden=!o; wb.setAttribute("aria-expanded",o); if(o) setTimeout(()=>{ const f=$(".whopick.on",wm); f&&f.focus(); },0); };
-  wb.onclick=e=>{ e.stopPropagation(); setOpen(wm.hidden); };
-  document.addEventListener("click",e=>{ if(!wm.hidden&&!e.target.closest(".who")) setOpen(false); });
-  document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&!wm.hidden){ setOpen(false); wb.focus(); } });
-  $$("[data-user]",wm).forEach(b=>b.onclick=()=>switchUser(b.dataset.user));
-  $$("[data-deluser]",wm).forEach(b=>b.onclick=()=>{ if(confirm(`להסיר את ${b.dataset.deluser} ואת המועדפים שלו מהדפדפן?`)) removeUser(b.dataset.deluser); });
-  $(".whoadd",wm).onsubmit=e=>{ e.preventDefault(); const v=e.target.newuser.value.trim(); if(v) switchUser(v); };
+  account($(".acct",top));
   const b=document.createElement("nav"); b.className="bnav";
   b.innerHTML=nav.map(([h,t,ic,k])=>`<a href="${h}" class="${k===active?"on":""}">${icon(ic)}${t}</a>`).join("");
   document.body.append(b);
   const t=document.createElement("div"); t.className="toast"; t.setAttribute("role","status"); document.body.append(t);
 }
+const G_ICON='<svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>';
+function account(box){
+  if(!window.Cloud||!Cloud.enabled) return;            // no Firebase config: no sign-in button at all
+  box.hidden=false;
+  const draw=u=>{
+    if(!u){ box.innerHTML=`<button type="button" class="gbtn sm" data-signin>${G_ICON}<span>התחברות</span></button>`;
+      $("[data-signin]",box).onclick=()=>Cloud.signIn().then(()=>toast("התחברת. המועדפים שלך נשמרים בחשבון.")).catch(e=>{ if(!e||e.code!=="auth/popup-closed-by-user") toast("ההתחברות לא הצליחה. נסו שוב."); });
+      return; }
+    const name=u.displayName||u.email||"";
+    box.innerHTML=`<button type="button" class="acctbtn" aria-haspopup="true" aria-expanded="false" aria-label="החשבון שלי: ${esc(name)}">${u.photoURL?`<img src="${esc(u.photoURL)}" alt="" width="30" height="30" referrerpolicy="no-referrer">`:`<span class="av">${esc([...name][0]||"?")}</span>`}</button>
+      <div class="acctmenu" hidden><b>${esc(u.displayName||"")}</b><small>${esc(u.email||"")}</small><p>המועדפים שלך נשמרים בחשבון ומסונכרנים בין המכשירים.</p><button type="button" class="btn sm" data-signout>התנתקות</button></div>`;
+    const btn=$(".acctbtn",box), menu=$(".acctmenu",box);
+    const open=o=>{ menu.hidden=!o; btn.setAttribute("aria-expanded",o); };
+    btn.onclick=e=>{ e.stopPropagation(); open(menu.hidden); };
+    document.addEventListener("click",e=>{ if(!menu.hidden&&!e.target.closest(".acct")) open(false); });
+    document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&!menu.hidden){ open(false); btn.focus(); } });
+    $("[data-signout]",box).onclick=()=>{ Cloud.signOut(); cloudOn=false; toast("התנתקת"); };
+  };
+  draw(Cloud.user);
+  Cloud.onChange(u=>{ draw(u); if(u) syncFavs(); });
+}
 let toastT;
 function toast(msg){ const t=$(".toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove("show"),2400); }
 
 /* ---------- rendering ---------- */
+function initials(name){ const w=String(name).replace(/["'״׳()]/g,"").trim().split(/\s+/).filter(Boolean); return ((w[0]||"")[0]||"")+((w[1]||"")[0]||""); }
 function photo(p){
   const c=catOf(p);
-  return p.img?`<img src="${esc(p.img)}" alt="" loading="lazy" decoding="async" width="240" height="240">`
-    :`<div class="ph-ic" style="background:${c.color}1a;color:${c.color}">${icon(c.icon)}</div>`;
+  if(p.img) return `<img src="${esc(p.img)}" alt="" loading="lazy" decoding="async" width="240" height="240">`;
+  const tile=`<div class="ph-tile" style="--c:${c.color}">${icon(c.icon,"ph-tile-ic")}<span class="ph-tile-tx">${esc(initials(p.name))}</span></div>`;
+  if(!p.dom) return tile;
+  return `${tile}<div class="ph-logo"><img class="logo-img" src="https://www.google.com/s2/favicons?domain=${encodeURIComponent(p.dom)}&sz=128" alt="" loading="lazy" decoding="async" width="64" height="64" referrerpolicy="no-referrer"></div>`;
 }
+/* brand logos: hide the generic 16px "no icon" result so the designed tile shows instead */
+document.addEventListener("load",e=>{ const im=e.target; if(im.classList&&im.classList.contains("logo-img")){ const w=im.naturalWidth;
+  if(w<=16) im.parentNode.remove(); else im.parentNode.classList.add(w>=96?"big":"ok"); } },true);
+document.addEventListener("error",e=>{ const im=e.target; if(im.classList&&im.classList.contains("logo-img")) im.parentNode.remove(); },true);
 function rating(p){
   return p.rating==null?"":`<span class="rate">${icon("star")}<b>${p.rating.toFixed(1)}</b>${p.reviews?`<span>(${nf0.format(p.reviews)})</span>`:""}</span>`;
 }
@@ -341,10 +357,10 @@ function pinIcon(p,sel){
   const c=catOf(p);
   const sz=sel?[30,40]:[26,34];
   return L.divIcon({className:"gpin-wrap",iconSize:sz,iconAnchor:[sz[0]/2,sz[1]],popupAnchor:[0,-sz[1]+2],
-    html:`<div class="gpin ${favs.has(p.id)?"fav":""} ${sel?"sel":""}" style="--c:${sel?"#ea4335":c.color}">
+    html:`<div class="gpin ${favs.has(p.id)?"fav":""} ${sel?"sel":""}" data-r="${p.rating||0}" style="--c:${sel?"#ea4335":c.color}">
       <svg class="gpin-shape" viewBox="0 0 26 34" aria-hidden="true"><path d="M13 33s-11-10.2-11-19.2A11 11 0 0 1 24 13.8C24 22.8 13 33 13 33z"/></svg>
       ${icon(sel?"pin":c.icon,"gpin-ic")}
-      <span class="gpin-label" style="color:${c.color}">${esc(p.name)}</span></div>`});
+      <span class="gpin-label">${esc(p.name)}</span></div>`});
 }
 const meIcon=()=>L.divIcon({className:"",html:`<div class="me-dot"></div>`,iconSize:[18,18],iconAnchor:[9,9]});
 
@@ -437,8 +453,29 @@ function explorer(kind){
   // map
   const map=L.map("map",{zoomControl:false,minZoom:9,maxZoom:20}).setView(HOME,14);
   L.control.zoom({position:"bottomright",zoomInTitle:"התקרבות",zoomOutTitle:"התרחקות"}).addTo(map);
-  const zcls=()=>{ const z=map.getZoom(); map.getContainer().classList.toggle("show-labels",z>=19); };
-  map.on("zoomend",zcls); zcls();
+  /* place names on the map: shown on every single pin, hidden only where they would overlap (like Google Maps) */
+  let lblRaf=0;
+  function placeLabels(){
+    cancelAnimationFrame(lblRaf);
+    lblRaf=requestAnimationFrame(()=>{
+      const box=map.getContainer().getBoundingClientRect();
+      const pins=[...map.getContainer().querySelectorAll(".gpin")];
+      pins.forEach(el=>el.classList.remove("nolabel","lbl-left"));
+      const taken=[]; const hit=r=>taken.some(t=>!(r.right<t.left||r.left>t.right||r.bottom<t.top||r.top>t.bottom));
+      pins.forEach(el=>{ const r=el.getBoundingClientRect(); taken.push({left:r.left+3,right:r.right-3,top:r.top+3,bottom:r.bottom-2}); });
+      // selected first, then favorites, then by rating
+      pins.sort((a,b)=>(b.classList.contains("sel")-a.classList.contains("sel"))||(b.classList.contains("fav")-a.classList.contains("fav"))||((+b.dataset.r||0)-(+a.dataset.r||0)));
+      for(const el of pins){
+        const lb=el.querySelector(".gpin-label"); if(!lb) continue;
+        let r=lb.getBoundingClientRect();
+        const out=r=>r.left<box.left||r.right>box.right||r.top<box.top||r.bottom>box.bottom;
+        if(hit(r)||out(r)){ el.classList.add("lbl-left"); r=lb.getBoundingClientRect();
+          if(hit(r)||out(r)){ el.classList.remove("lbl-left"); el.classList.add("nolabel"); continue; } }
+        taken.push({left:r.left-2,right:r.right+2,top:r.top-1,bottom:r.bottom+1});
+      }
+    });
+  }
+  map.on("zoomend moveend",placeLabels);
   baseLayer(map);
   let meMk=null, meCirc=null, pending=null, moved=false;
   const sized=fn=>{ map.invalidateSize(); if(map.getSize().x>0) fn(); else pending=fn; };
@@ -474,6 +511,7 @@ function explorer(kind){
   const layer=L.markerClusterGroup?L.markerClusterGroup({chunkedLoading:true,showCoverageOnHover:false,spiderfyOnMaxZoom:false,zoomToBoundsOnClick:true,
     disableClusteringAtZoom:18,maxClusterRadius:z=>z<13?50:z<16?36:56,
     iconCreateFunction:c=>{const n=c.getChildCount();const sz=n<10?26:n<50?30:34;return L.divIcon({className:"",html:`<div class="cluster" style="width:${sz}px;height:${sz}px">${n}</div>`,iconSize:[sz,sz]});}}).addTo(map):L.layerGroup().addTo(map);
+  if(layer.on) layer.on("animationend",placeLabels);
   const openPin=(m)=>{ if(layer.zoomToShowLayer) layer.zoomToShowLayer(m,()=>m.openPopup()); else m.openPopup(); };
   // places at the same coordinates (e.g. one mall) get a small, stable offset around the point
   const spots=new Map();
@@ -548,6 +586,7 @@ function explorer(kind){
       if(!m){ m=L.marker(spot(p),{icon:pinIcon(p,st.sel===p.id),riseOnHover:true}).bindPopup(()=>popup(p),{maxWidth:260,autoPanPaddingTopLeft:[20,80]}); layer.addLayer(m);
         m.on("click",()=>select(p.id,false)); markers.set(p.id,m); }
       else m.setIcon(pinIcon(p,st.sel===p.id)); });
+    placeLabels();
     if(fit&&arr.length){ const pts=arr.map(p=>[p.lat,p.lng]); sized(()=>map.fitBounds(L.latLngBounds(pts).pad(.12),{maxZoom:16})); }
     // url state
     const u=new URLSearchParams(); if(st.q) u.set("q",st.q); if(st.area) u.set("area",st.area); if(st.cat) u.set("cat",st.cat); if(st.fav) u.set("fav","1"); if(st.kosher) u.set("kosher","1"); if(st.open) u.set("open","1"); if(st.sort!=="dist") u.set("sort",st.sort); if(st.sel) u.set("id",st.sel);
