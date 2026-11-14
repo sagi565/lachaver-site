@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f7f4ef">
+<meta name="robots" content="noindex">
+<title>אוכל · לאחבר</title>
+<link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=Secular+One&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://unpkg.com" crossorigin>
+<link rel="preconnect" href="https://tiles.openfreemap.org" crossorigin>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<main class="ex" id="main">
+  <section class="ex-side">
+    <div class="ex-head">
+      <h1>אוכל<span class="count" id="count"></span></h1>
+      <button class="btn sm" data-addbtn><svg class="i" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>הוספת מקום</button>
+    </div>
+    <div class="filters">
+      <div class="field">
+        <label class="sr" for="q">חיפוש</label>
+        <input id="q" name="q" type="search" placeholder="שם, סוג אוכל או רחוב…" autocomplete="off" enterkeyhint="search">
+        <svg class="i" aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      </div>
+      <div class="scroller">
+        <span id="areas"></span>
+        <select class="sel" id="sort" aria-label="מיון">
+          <option value="dist">הכי קרוב</option>
+          <option value="rating">דירוג בגוגל</option>
+          <option value="reviews">הכי הרבה ביקורות</option>
+          <option value="name">א–ת</option>
+        </select>
+        <button class="chip" id="openchip" aria-pressed="false"><span class="dot" style="background:var(--open)"></span>פתוח עכשיו</button>
+        <button class="chip" id="favchip" aria-pressed="false"><svg class="i" aria-hidden="true" viewBox="0 0 24 24" style="color:var(--heart)"><path d="M12 20.5s-7.6-4.6-9.3-9.4C1.4 7.4 3.7 4 7.2 4c2.1 0 3.7 1.1 4.8 2.7C13.1 5.1 14.7 4 16.8 4c3.5 0 5.8 3.4 4.5 7.1-1.7 4.8-9.3 9.4-9.3 9.4z"/></svg>מועדפים</button>
+        <button class="chip" id="kosher" aria-pressed="false">כשר בלבד</button>
+      </div>
+      <div class="scroller" id="cats"></div>
+    </div>
+    <p class="opennote" id="opennote" hidden></p>
+    <div class="list" id="list"></div>
+    <div class="backup"><span>גיבוי המקומות שהוספת:</span>
+      <button class="btn sm ghost" id="export">ייצוא לקובץ</button>
+      <label class="btn sm ghost">ייבוא מקובץ<input type="file" id="import" accept="application/json,.json" hidden></label></div>
+  </section>
+  <div id="map"></div>
+</main>
+<div class="viewtoggle">
+  <button id="vList" class="on" aria-pressed="true"><svg class="i" aria-hidden="true" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg>רשימה</button>
+  <button id="vMap" aria-pressed="false"><svg class="i" aria-hidden="true" viewBox="0 0 24 24"><path d="M9 4L3 6.5v13.5l6-2.5 6 2.5 6-2.5V4l-6 2.5z"/><path d="M9 4v13.5M15 6.5V20"/></svg>מפה</button>
+</div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.0.22/leaflet-maplibre-gl.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<script src="assets/gate.js"></script>
+<script src="assets/app.js"></script>
+<script>Gate.ready.then(()=>{ Lachaver.chrome("food"); Lachaver.explorer("food"); });</script>
+</body>
+</html>

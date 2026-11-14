@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 220" preserveAspectRatio="xMinYMid slice">
+  <rect width="480" height="220" fill="#1f6b55"/>
+  <circle cx="60" cy="40" r="110" fill="#26806a"/>
+  <circle cx="230" cy="210" r="95" fill="#2b8a6b"/>
+  <circle cx="175" cy="70" r="42" fill="#9fd6bf"/>
+  <rect x="290" y="-50" width="110" height="110" rx="55" fill="#185a47"/>
+  <g fill="none" stroke="#effaf5" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <!-- shopping bag -->
+    <g transform="translate(40 40) rotate(-8 30 30) scale(2.7)">
+      <path d="M5 8h14l-1 12.5H6z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/>
+    </g>
+    <!-- glasses -->
+    <g transform="translate(150 44) rotate(6 26 26) scale(2.1)" stroke="#124436">
+      <circle cx="6.5" cy="14.5" r="3.5"/><circle cx="17.5" cy="14.5" r="3.5"/><path d="M10 14.5h4M3 14l2.5-7M21 14l-2.5-7"/>
+    </g>
+    <!-- shirt -->
+    <g transform="translate(70 130) rotate(10 30 30) scale(2.4)">
+      <path d="M8.5 3.5L3.5 6.5l2 4.5 2.5-1v10.5h8V10l3 1 2-4.5-5-3a3.5 3.5 0 0 1-7 0z"/>
+    </g>
+    <!-- gem -->
+    <g transform="translate(196 140) rotate(-12 24 24) scale(2.2)">
+      <path d="M6.5 4h11l3.5 5-9 11.5L3 9z"/><path d="M3 9h18"/>
+    </g>
+    <!-- gift -->
+    <g transform="translate(262 50) rotate(14 24 24) scale(2.2)">
+      <path d="M3.5 9h17v4h-17zM5 13v7.5h14V13M12 9v11.5"/><path d="M12 9C10.5 5 6.5 4.6 6.5 7.2S12 9 12 9s5.5 1.8 5.5-1.8S13.5 5 12 9z"/>
+    </g>
+  </g>
+  <g fill="#effaf5" opacity=".5">
+    <circle cx="140" cy="130" r="3"/><circle cx="250" cy="20" r="2.5"/><circle cx="24" cy="170" r="2.5"/><circle cx="310" cy="160" r="3"/><circle cx="120" cy="18" r="2"/>
+  </g>
+</svg>
