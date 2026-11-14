@@ -397,3 +397,28 @@ html.locked body > :not(.gate):not(script){visibility:hidden}
 .gate-or{display:flex;align-items:center;gap:10px;color:var(--ink-3);font-size:13px}
 .gate-or::before,.gate-or::after{content:"";flex:1;height:1px;background:var(--line)}
 @media (max-width:900px){ .gbtn.sm span{display:none} .gbtn.sm{padding:7px} .acctmenu{position:fixed;top:calc(var(--head) + 6px);left:12px;right:12px;width:auto} }
+
+/* Lohaver wordmark (Latin) */
+.logo b[dir=ltr],.gate-card h1[dir=ltr]{letter-spacing:-.3px}
+
+/* small groups drawn as a stacked pin */
+.gpin.stack .gpin-back{transform:translate(4px,-3px);opacity:.55}
+.gpin-label i{font-style:normal;font-weight:400;color:#5f6368}
+
+/* home search results across food and shops */
+.hero{position:relative}
+.hresults{position:absolute;z-index:50;margin-top:8px;width:min(620px,100%);background:var(--surface);border-radius:16px;box-shadow:0 12px 40px rgba(25,22,19,.16);padding:8px;max-height:min(70vh,560px);overflow:auto;overscroll-behavior:contain}
+.hr-group+.hr-group{border-top:1px solid var(--line);margin-top:6px;padding-top:6px}
+.hr-h{display:flex;justify-content:space-between;align-items:baseline;padding:6px 8px;font-weight:600;color:var(--ink-2);font-size:13px}
+.hr-h a{font-weight:400;color:var(--ink-2);text-decoration:none}
+.hr-h a:hover{color:var(--ink)}
+.hr-row{display:flex;align-items:center;gap:12px;padding:8px;border-radius:10px;text-decoration:none;color:var(--ink)}
+.hr-row:hover,.hr-row:focus-visible{background:var(--sunk)}
+.hr-ph{position:relative;width:44px;height:44px;border-radius:10px;overflow:hidden;flex:none;background:var(--sunk)}
+.hr-ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.hr-ph .ph-tile-tx{font-size:16px}
+.hr-ph .ph-logo img{width:28px!important;height:28px!important}
+.hr-tx{display:flex;flex-direction:column;min-width:0;flex:1}
+.hr-tx b{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hr-tx small{color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hr-empty{margin:0;padding:14px;color:var(--ink-2)}

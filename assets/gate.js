@@ -1,4 +1,4 @@
-/* לאחבר: entry gate for the public build.
+/* Lohaver: entry gate for the public build.
    The place data, hours and photos ship only as an AES-GCM encrypted vault.
    Ways in: the password (key derived with PBKDF2-SHA256), or "Continue with Google"
    once that Google account has entered the password before (the key is then kept in
@@ -52,7 +52,7 @@ window.Gate = (() => {
     const google = window.Cloud && Cloud.enabled;
     g.innerHTML = `<form class="gate-card" novalidate>
       <img src="assets/logo.svg" alt="" width="56" height="56">
-      <h1 translate="no">לא<span>חבר</span></h1>
+      <h1 translate="no" dir="ltr">Lo<span>haver</span></h1>
       <p>האתר פרטי.</p>
       ${google ? `<button type="button" class="gbtn" data-google>${G_ICON}<span>המשך עם Google</span></button>
       <div class="gate-or"><span>או עם סיסמה</span></div>` : `<p>כדי להיכנס צריך סיסמה.</p>`}

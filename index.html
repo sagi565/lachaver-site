@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f7f4ef">
 <meta name="robots" content="noindex">
-<title>לאחבר</title>
+<title>Lohaver</title>
 <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=Secular+One&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/style.css?v=72fc2d0524c7">
+<link rel="stylesheet" href="assets/style.css?v=19ab92b38c0e">
 </head>
 <body>
 <main class="wrap" id="main">
@@ -20,9 +20,10 @@
     <p>מסעדות, בתי קפה וחנויות בכל אזור המרכז שמכבדים את כרטיסי חבר, מתל אביב ועד כפר סבא, ראשון לציון וראש העין.</p>
     <form class="field" id="hsearch" role="search">
       <label class="sr" for="hq">חיפוש</label>
-      <input id="hq" name="q" type="search" placeholder="סושי, גלידה, בורגר, שם של מקום…" autocomplete="off" enterkeyhint="search">
+      <input id="hq" name="q" type="search" role="combobox" aria-expanded="false" aria-controls="hresults" aria-autocomplete="list" placeholder="סושי, גלידה, משקפיים, שם של חנות או מסעדה…" autocomplete="off" enterkeyhint="search">
       <svg class="i" aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
     </form>
+    <div class="hresults" id="hresults" hidden></div>
     <div class="quick"><a class="chip" href="food.html?open=1"><span class="dot" style="background:var(--open)"></span>אוכל שפתוח עכשיו</a><a class="chip" href="shops.html?open=1"><span class="dot" style="background:var(--open)"></span>חנויות שפתוחות עכשיו</a></div>
   </section>
 
@@ -73,16 +74,16 @@
 
 <footer class="foot">
   <div class="wrap">
-    <p><a class="logo" href="index.html"><img src="assets/logo.svg" alt="" width="24" height="24"><b translate="no">לא<span>חבר</span></b></a></p>
+    <p><a class="logo" href="index.html"><img src="assets/logo.svg" alt="" width="24" height="24"><b translate="no" dir="ltr">Lo<span>haver</span></b></a></p>
     <p>רשימת המקומות והחנויות נאספה ממפת בתי העסק של חבר ב-14.11.2026. ל-42 מקומות האוכל שליד גבעת שמואל יש גם דירוגים ותמונות מגוגל מפות, מאותו יום. לפני שמגיעים, כדאי לוודא מול המקום שההטבה עדיין בתוקף.</p>
     <p>אתר אישי, לא קשור לחבר. המועדפים של כל משתמש והמקומות שהוספתם נשמרים רק בדפדפן הזה.</p>
   </div>
 </footer>
 
-<script src="assets/gate.js?v=72fc2d0524c7"></script>
-<script src="assets/firebase-config.js?v=72fc2d0524c7"></script>
-<script src="assets/cloud.js?v=72fc2d0524c7"></script>
-<script src="assets/app.js?v=72fc2d0524c7"></script>
+<script src="assets/gate.js?v=19ab92b38c0e"></script>
+<script src="assets/firebase-config.js?v=19ab92b38c0e"></script>
+<script src="assets/cloud.js?v=19ab92b38c0e"></script>
+<script src="assets/app.js?v=19ab92b38c0e"></script>
 <script>Gate.ready.then(()=>{ Lachaver.chrome("home"); Lachaver.home(); });</script>
 </body>
 </html>

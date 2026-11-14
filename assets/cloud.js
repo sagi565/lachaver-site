@@ -1,4 +1,4 @@
-/* לאחבר: Google sign-in (Firebase Auth) and a per-user Firestore doc.
+/* Lohaver: Google sign-in (Firebase Auth) and a per-user Firestore doc.
    users/{uid} = { favs: [ids], vault: { <vaultId>: <base64 key> }, name, email, updated }
    Firestore rules must allow each user to read/write only their own doc (see firestore.rules). */
 window.Cloud = (() => {

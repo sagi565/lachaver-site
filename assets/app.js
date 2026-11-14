@@ -1,4 +1,4 @@
-/* לאחבר — shared code for all pages */
+/* Lohaver — shared code for all pages */
 (function(){
 "use strict";
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
@@ -201,7 +201,7 @@ function chrome(active){
   const skip=document.createElement("a"); skip.className="skip"; skip.href="#main"; skip.textContent="דלג לתוכן"; document.body.prepend(skip);
   const top=document.createElement("header"); top.className="top";
   top.innerHTML=`<div class="wrap">
-    <a class="logo" href="index.html" aria-label="לאחבר, דף הבית"><img src="assets/logo.svg" alt="" width="30" height="30"><b translate="no">לא<span>חבר</span></b></a>
+    <a class="logo" href="index.html" aria-label="Lohaver, דף הבית"><img src="assets/logo.svg" alt="" width="30" height="30"><b translate="no" dir="ltr">Lo<span>haver</span></b></a>
     <nav class="nav">${nav.map(([h,t,,k])=>`<a href="${h}" class="${k===active?"on":""}">${t}</a>`).join("")}</nav>
     <div class="spacer"></div>
     <a class="favlink" href="food.html?fav=1" title="המועדפים שלי">${icon("heart")}<span class="t">מועדפים</span><em class="favcount">${favs.size||""}</em></a>
@@ -431,7 +431,7 @@ function addSheet(kind,onSaved){
 function removeCustom(id){ custom=custom.filter(p=>p.id!==id); saveCustom(); favs.delete(id); saveFavs(); }
 function exportCustom(){
   const blob=new Blob([JSON.stringify(custom,null,1)],{type:"application/json"});
-  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="lachaver-places.json"; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="lohaver-places.json"; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
 }
 function importCustom(file,done){
   const r=new FileReader();
@@ -508,10 +508,23 @@ function explorer(kind){
 
   const markers=new Map();
   // clusters: only when pins really crowd, never spread out ("spiderfy"); a click just zooms in
+  const SMALL=5;
   const layer=L.markerClusterGroup?L.markerClusterGroup({chunkedLoading:true,showCoverageOnHover:false,spiderfyOnMaxZoom:false,zoomToBoundsOnClick:true,
     disableClusteringAtZoom:18,maxClusterRadius:z=>z<13?50:z<16?36:56,
-    iconCreateFunction:c=>{const n=c.getChildCount();const sz=n<10?26:n<50?30:34;return L.divIcon({className:"",html:`<div class="cluster" style="width:${sz}px;height:${sz}px">${n}</div>`,iconSize:[sz,sz]});}}).addTo(map):L.layerGroup().addTo(map);
+    iconCreateFunction:c=>{const n=c.getChildCount(); if(n<=SMALL) return smallGroupIcon(c);const sz=n<10?26:n<50?30:34;return L.divIcon({className:"",html:`<div class="cluster" style="width:${sz}px;height:${sz}px">${n}</div>`,iconSize:[sz,sz]});}}).addTo(map):L.layerGroup().addTo(map);
   if(layer.on) layer.on("animationend",placeLabels);
+  /* a group of a few places looks like a pin with a small stack behind it (no number); click zooms in */
+  function smallGroupIcon(c){
+    const ms=c.getAllChildMarkers(); const ps=ms.map(m=>m.place).filter(Boolean);
+    const best=ps.sort((a,b)=>(favs.has(b.id)-favs.has(a.id))||((b.rating||0)-(a.rating||0))||((b.reviews||0)-(a.reviews||0)))[0];
+    if(!best) return L.divIcon({className:"",html:`<div class="cluster">${c.getChildCount()}</div>`,iconSize:[26,26]});
+    const k=catOf(best);
+    return L.divIcon({className:"gpin-wrap",iconSize:[26,34],iconAnchor:[13,34],
+      html:`<div class="gpin stack" data-r="${best.rating||0}" style="--c:${k.color}">
+        <svg class="gpin-shape gpin-back" viewBox="0 0 26 34" aria-hidden="true"><path d="M13 33s-11-10.2-11-19.2A11 11 0 0 1 24 13.8C24 22.8 13 33 13 33z"/></svg>
+        <svg class="gpin-shape" viewBox="0 0 26 34" aria-hidden="true"><path d="M13 33s-11-10.2-11-19.2A11 11 0 0 1 24 13.8C24 22.8 13 33 13 33z"/></svg>
+        ${icon(k.icon,"gpin-ic")}<span class="gpin-label">${esc(best.name)} <i>ועוד</i></span></div>`});
+  }
   const openPin=(m)=>{ if(layer.zoomToShowLayer) layer.zoomToShowLayer(m,()=>m.openPopup()); else m.openPopup(); };
   // places at the same coordinates (e.g. one mall) get a small, stable offset around the point
   const spots=new Map();
@@ -583,7 +596,7 @@ function explorer(kind){
     // sync markers
     for(const [id,m] of markers){ if(!ids.has(id)){ layer.removeLayer(m); markers.delete(id);} }
     arr.forEach(p=>{ let m=markers.get(p.id);
-      if(!m){ m=L.marker(spot(p),{icon:pinIcon(p,st.sel===p.id),riseOnHover:true}).bindPopup(()=>popup(p),{maxWidth:260,autoPanPaddingTopLeft:[20,80]}); layer.addLayer(m);
+      if(!m){ m=L.marker(spot(p),{icon:pinIcon(p,st.sel===p.id),riseOnHover:true}); m.place=p; m.bindPopup(()=>popup(p),{maxWidth:260,autoPanPaddingTopLeft:[20,80]}); layer.addLayer(m);
         m.on("click",()=>select(p.id,false)); markers.set(p.id,m); }
       else m.setIcon(pinIcon(p,st.sel===p.id)); });
     placeLabels();
@@ -647,8 +660,26 @@ function home(){
   const food=places("food"), shops=places("shop");
   $("#nfood").textContent=food.length+" מקומות";
   $("#nshop").textContent=shops.length?shops.length+" חנויות":"הוסיפו את החנויות שאתם מכירים";
-  const f=$("#hsearch");
-  f.onsubmit=e=>{ e.preventDefault(); const q=$("input",f).value.trim(); location.href="food.html"+(q?"?q="+encodeURIComponent(q):""); };
+  const f=$("#hsearch"), inp=$("input",f), res=$("#hresults");
+  const matchAll=q=>{ q=q.trim().toLowerCase(); if(!q) return {food:[],shop:[]};
+    const hit=p=>(p.name+" "+(p.addr||"")+" "+(p.type||"")+" "+catOf(p).label+" "+(p.area||"")).toLowerCase().includes(q);
+    const by=(a,b)=>distOf(a)-distOf(b);
+    return {food:food.filter(hit).sort(by),shop:shops.filter(hit).sort(by)}; };
+  const row=p=>`<a class="hr-row" href="${pageOf(p.kind)}?id=${encodeURIComponent(p.id)}"><span class="hr-ph">${photo(p)}</span><span class="hr-tx"><b>${esc(p.name)}</b><small>${esc(p.type||catOf(p).label)} · ${esc(p.area||"")} · ${fmtKm(distOf(p))}</small></span>${p.deal?`<span class="tag deal">${esc(p.deal)}</span>`:""}</a>`;
+  function showResults(){
+    const q=inp.value.trim(); if(!q){ res.hidden=true; res.innerHTML=""; inp.setAttribute("aria-expanded","false"); return; }
+    const m=matchAll(q), enc=encodeURIComponent(q);
+    const group=(title,list,page)=>list.length?`<div class="hr-group"><div class="hr-h"><span>${title}</span><a href="${page}?q=${enc}">כל ${nf0.format(list.length)} התוצאות ←</a></div>${list.slice(0,5).map(row).join("")}</div>`:"";
+    res.innerHTML=(m.food.length||m.shop.length)?group("אוכל",m.food,"food.html")+group("חנויות",m.shop,"shops.html")
+      :`<p class="hr-empty">לא נמצא שום דבר בשם הזה. נסו מילה אחרת, למשל סוג אוכל או שם של רשת.</p>`;
+    res.hidden=false; inp.setAttribute("aria-expanded","true");
+  }
+  let hT; inp.addEventListener("input",()=>{ clearTimeout(hT); hT=setTimeout(showResults,120); });
+  inp.addEventListener("focus",()=>{ if(inp.value.trim()) showResults(); });
+  document.addEventListener("click",e=>{ if(!e.target.closest("#hsearch,#hresults")){ res.hidden=true; inp.setAttribute("aria-expanded","false"); } });
+  inp.addEventListener("keydown",e=>{ if(e.key==="Escape"){ res.hidden=true; inp.setAttribute("aria-expanded","false"); } });
+  f.onsubmit=e=>{ e.preventDefault(); const q=inp.value.trim(); const m=matchAll(q);
+    location.href=(m.shop.length>m.food.length?"shops.html":"food.html")+(q?"?q="+encodeURIComponent(q):""); };
   function rows(){
     const all=places();
     const near=food.slice().sort((a,b)=>distOf(a)-distOf(b)).slice(0,14);
