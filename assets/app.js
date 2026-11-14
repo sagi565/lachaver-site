@@ -224,7 +224,7 @@ function account(box){
       return; }
     const name=u.displayName||u.email||"";
     box.innerHTML=`<button type="button" class="acctbtn" aria-haspopup="true" aria-expanded="false" aria-label="החשבון שלי: ${esc(name)}">${u.photoURL?`<img src="${esc(u.photoURL)}" alt="" width="30" height="30" referrerpolicy="no-referrer">`:`<span class="av">${esc([...name][0]||"?")}</span>`}</button>
-      <div class="acctmenu" hidden><b>${esc(u.displayName||"")}</b><small>${esc(u.email||"")}</small><p>המועדפים שלך נשמרים בחשבון ומסונכרנים בין המכשירים.</p><button type="button" class="btn sm" data-signout>התנתקות</button></div>`;
+      <div class="acctmenu" hidden><b>${esc(u.displayName||"")}</b><small>${esc(u.email||"")}</small><button type="button" class="btn sm" data-signout>התנתקות</button></div>`;
     const btn=$(".acctbtn",box), menu=$(".acctmenu",box);
     const open=o=>{ menu.hidden=!o; btn.setAttribute("aria-expanded",o); };
     btn.onclick=e=>{ e.stopPropagation(); open(menu.hidden); };

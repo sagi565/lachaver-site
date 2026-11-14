@@ -443,3 +443,4 @@ html.locked body > :not(.gate):not(script){visibility:hidden}
 .leaflet-container a.leaflet-popup-close-button:hover{background:#fff;color:#202124}
 .leaflet-popup:has(.pop>img) a.leaflet-popup-close-button{color:#5f6368;text-shadow:none}
 .pop .in h3{padding-left:30px}
+.acctmenu .btn{margin-top:8px}
