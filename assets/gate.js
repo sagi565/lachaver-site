@@ -1,8 +1,10 @@
 /* Lohaver: entry gate for the public build.
-   The place data, hours and photos ship only as an AES-GCM encrypted vault.
-   Ways in: the password (key derived with PBKDF2-SHA256), or "Continue with Google"
-   once that Google account has entered the password before (the key is then kept in
-   the user's own Firestore doc, readable only by them). */
+   - Signing in with Google is required to see the site.
+   - The place data, hours and photos ship only as an AES-GCM encrypted vault. The first
+     time a Google account comes in, it also enters the password; the key is then kept in
+     that user's own Firestore doc (readable only by them) and in this browser, so after
+     that Google alone opens the site, on any device.
+   - Firebase keeps the Google session, so returning users go straight in. */
 window.Gate = (() => {
   "use strict";
   let resolve;
@@ -23,67 +25,69 @@ window.Gate = (() => {
     window.PLACES = d.places;
     window.HOURS = d.hours;
   }
+  const localKey = vault => { try { return localStorage.getItem("lachaver.key." + vault.id); } catch (_) { return null; } };
   const remember = (vault, raw) => { try { localStorage.setItem("lachaver.key." + vault.id, raw); } catch (_) {} };
-  async function saveToCloud(vault, raw) {
-    if (!window.Cloud || !Cloud.user) return;
-    try { await Cloud.write({ vault: { [vault.id]: raw } }); } catch (e) { console.warn(e); }
-  }
+  const forget = vault => { try { localStorage.removeItem("lachaver.key." + vault.id); } catch (_) {} };
+
   function done() {
     document.documentElement.classList.remove("locked");
     const g = document.getElementById("gate");
     if (g) g.remove();
     resolve();
+    // signing out locks the site again
+    let seen = true;
+    Cloud.onChange(u => { if (!u && seen) location.reload(); });
   }
-  async function tryCloud(vault) {
-    if (!window.Cloud || !Cloud.user) return false;
+  async function keyFor(vault) {            // the key this signed-in user may use, or null
+    const raw = localKey(vault);
+    if (raw) { try { await unlock(vault, await importRaw(raw)); return true; } catch (_) { forget(vault); } }
     try {
       const d = await Cloud.read();
-      const raw = d && d.vault && d.vault[vault.id];
-      if (!raw) return false;
-      await unlock(vault, await importRaw(raw));
-      remember(vault, raw);
-      return true;
-    } catch (_) { return false; }
+      const r = d && d.vault && d.vault[vault.id];
+      if (r) { await unlock(vault, await importRaw(r)); remember(vault, r); return true; }
+    } catch (e) { console.warn(e); }
+    return false;
   }
-  function form(vault) {
-    const g = document.createElement("div");
-    g.id = "gate";
-    g.className = "gate";
-    const google = window.Cloud && Cloud.enabled;
-    g.innerHTML = `<form class="gate-card" novalidate>
+
+  function card(inner) {
+    let g = document.getElementById("gate");
+    if (!g) { g = document.createElement("div"); g.id = "gate"; g.className = "gate"; document.body.append(g); }
+    g.innerHTML = `<div class="gate-card">
       <img src="assets/logo.svg" alt="" width="56" height="56">
       <h1 translate="no" dir="ltr">Lo<span>haver</span></h1>
-      <p>האתר פרטי.</p>
-      ${google ? `<button type="button" class="gbtn" data-google>${G_ICON}<span>המשך עם Google</span></button>
-      <div class="gate-or"><span>או עם סיסמה</span></div>` : `<p>כדי להיכנס צריך סיסמה.</p>`}
-      <label class="sr" for="gatepw">סיסמה</label>
-      <input id="gatepw" name="password" type="password" autocomplete="current-password" placeholder="סיסמה…" required>
-      <label class="gate-remember"><input type="checkbox" name="remember" checked> לזכור אותי בדפדפן הזה</label>
-      <button class="btn primary" type="submit">כניסה</button>
+      ${inner}
       <p class="gate-err" role="alert" aria-live="polite"></p>
-    </form>`;
-    document.body.append(g);
-    const f = g.querySelector("form"), err = g.querySelector(".gate-err"), btn = f.querySelector("button[type=submit]");
-    const gbtn = f.querySelector("[data-google]");
-    if (matchMedia("(pointer:fine)").matches && !google) f.password.focus();
-    const signedInNote = u => { if (gbtn && u) { gbtn.querySelector("span").textContent = "מחובר כ-" + (u.displayName || u.email); gbtn.disabled = true; } };
-    if (gbtn) {
-      gbtn.onclick = async () => {
-        err.textContent = ""; gbtn.disabled = true;
-        try {
-          await Cloud.signIn();
-          if (!Cloud.user) return;               // redirect flow continues after reload
-          if (await tryCloud(vault)) return done();
-          signedInNote(Cloud.user);
-          err.textContent = "בפעם הראשונה צריך גם את הסיסמה. אחר כך Google לבד יספיק, בכל מכשיר.";
-          f.password.focus();
-        } catch (e) {
-          gbtn.disabled = false;
-          err.textContent = e && e.code === "auth/popup-closed-by-user" ? "" : "ההתחברות עם Google לא הצליחה. נסו שוב או היכנסו עם הסיסמה.";
-        }
-      };
-      Cloud.onChange(u => signedInNote(u));
-    }
+    </div>`;
+    return g;
+  }
+  function signInScreen(vault) {
+    const g = card(`<p>כדי לראות את האתר צריך להתחבר.</p>
+      <button type="button" class="gbtn" data-google>${G_ICON}<span>המשך עם Google</span></button>`);
+    const btn = g.querySelector("[data-google]"), err = g.querySelector(".gate-err");
+    btn.onclick = async () => {
+      err.textContent = ""; btn.disabled = true; btn.querySelector("span").textContent = "מתחבר…";
+      try {
+        await Cloud.signIn();
+        if (!Cloud.user) return;                 // redirect flow: continues after reload
+        await afterSignIn(vault);
+      } catch (e) {
+        btn.disabled = false; btn.querySelector("span").textContent = "המשך עם Google";
+        if (!e || e.code !== "auth/popup-closed-by-user") err.textContent = "ההתחברות לא הצליחה. נסו שוב.";
+      }
+    };
+  }
+  function passwordScreen(vault) {
+    const u = Cloud.user;
+    const g = card(`<p>שלום ${esc(u.displayName || u.email || "")}. בכניסה הראשונה צריך גם את הסיסמה, ואחר כך Google לבד מספיק בכל מכשיר.</p>
+      <form novalidate class="gate-form">
+        <label class="sr" for="gatepw">סיסמה</label>
+        <input id="gatepw" name="password" type="password" autocomplete="current-password" placeholder="סיסמה…" required>
+        <button class="btn primary" type="submit">כניסה</button>
+      </form>
+      <button type="button" class="gate-switch" data-switch>להתחבר עם חשבון אחר</button>`);
+    const f = g.querySelector("form"), err = g.querySelector(".gate-err"), btn = f.querySelector("button");
+    if (matchMedia("(pointer:fine)").matches) f.password.focus();
+    g.querySelector("[data-switch]").onclick = async () => { await Cloud.signOut(); signInScreen(vault); };
     f.onsubmit = async e => {
       e.preventDefault();
       const pw = f.password.value;
@@ -93,8 +97,8 @@ window.Gate = (() => {
         const key = await deriveKey(pw, b64(vault.salt), vault.iter);
         await unlock(vault, key);
         const raw = toB64(await crypto.subtle.exportKey("raw", key));
-        if (f.remember.checked) remember(vault, raw);
-        await saveToCloud(vault, raw);
+        remember(vault, raw);
+        try { await Cloud.write({ vault: { [vault.id]: raw } }); } catch (e2) { console.warn(e2); }
         done();
       } catch (_) {
         btn.disabled = false; btn.textContent = "כניסה";
@@ -103,20 +107,22 @@ window.Gate = (() => {
       }
     };
   }
+  async function afterSignIn(vault) {
+    if (await keyFor(vault)) return done();
+    passwordScreen(vault);
+  }
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
   async function start() {
     document.documentElement.classList.add("locked");
+    card(`<p class="gate-wait">טוען…</p>`);
     let vault;
     try { vault = await (await fetch("assets/vault.json", { cache: "no-cache" })).json(); }
-    catch (_) { document.body.insertAdjacentHTML("beforeend", '<p class="gate-fail">לא הצלחתי לטעון את האתר. בדקו את החיבור ורעננו.</p>'); return; }
-    try {
-      const raw = localStorage.getItem("lachaver.key." + vault.id);
-      if (raw) { await unlock(vault, await importRaw(raw)); return done(); }
-    } catch (_) { try { localStorage.removeItem("lachaver.key." + vault.id); } catch (e) {} }
-    if (window.Cloud && Cloud.enabled) {
-      const u = await Promise.race([Cloud.whenReady(), new Promise(r => setTimeout(() => r(null), 4000))]);
-      if (u && await tryCloud(vault)) return done();
-    }
-    form(vault);
+    catch (_) { card(`<p>לא הצלחתי לטעון את האתר. בדקו את החיבור ורעננו.</p>`); return; }
+    if (!window.Cloud || !Cloud.enabled) { card(`<p>ההתחברות לא זמינה כרגע.</p>`); return; }
+    const u = await Cloud.whenReady();          // Firebase restores the saved Google session here
+    if (u) return afterSignIn(vault);
+    signInScreen(vault);
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start); else start();
   return { ready };
